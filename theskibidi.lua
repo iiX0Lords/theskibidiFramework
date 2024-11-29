@@ -16,6 +16,20 @@ Object = require("libraries.classic")
 
 local getTouching = require("libraries.getTouching")
 Tweenservice = require("libraries.flux")
+local rs = require("libraries.resolution_solution")
+rs.conf({game_width = 1280, game_height = 720, scale_mode = rs.PIXEL_PERFECT_MODE})
+rs.setMode(rs.game_width, rs.game_height, {resizable = true})
+love.resize = function(w, h)
+    rs.resize(w, h)
+end
+
+local mouse_getPosition = love.mouse.getPosition
+love.mouse.getPosition = function()
+    local width, height = rs.get_game_size()
+    local x, y = mouse_getPosition()
+    x, y = rs.to_game(x, y)
+    return x, y
+end
 
 Vector2 = require("libraries.vector")
 Colour3 = Object.extend(Object)
@@ -67,7 +81,7 @@ Instance.new = function(type)
     function self:MouseOver()
         local dummyMouse = {}
         dummyMouse.Size = Vector2.new(1,1)
-        dummyMouse.Position = Vector2.new(love.mouse.getX(), love.mouse.getY())
+        dummyMouse.Position = Vector2.new(love.mouse.getPosition())
         return getTouching(self, dummyMouse)
     end
 
@@ -78,7 +92,7 @@ Instance.new = function(type)
 
         Script.new("update", function()
             if self.Dragging and dragStart ~= nil and startPos ~= nil then
-                local delta = Vector2.new(love.mouse.getX(), love.mouse.getY()) - dragStart
+                local delta = Vector2.new(love.mouse.getPosition()) - dragStart
                 local new = startPos + delta
                 self.Position = new
             end
@@ -149,7 +163,8 @@ Gravity = Vector2.new(0, -100)
 theskibidi.Draw = function()
     for _,instance in pairs(Workspace) do
         love.graphics.setColor(instance.Colour.r, instance.Colour.g, instance.Colour.b, instance.Colour.h)
-        love.graphics[instance.Type](instance.DrawMode, instance.Position.x, instance.Position.y, instance.Size.x, instance.Size.y)
+        local x, y = instance.Position.x, instance.Position.y
+        love.graphics[instance.Type](instance.DrawMode, x, y, instance.Size.x, instance.Size.y)
     end
 end
 theskibidi.Update = function(dt)
@@ -195,17 +210,21 @@ function love.load()
     end
 end
 function love.draw()
+    rs.push()
     for _,v in pairs(Scripts.draw) do
         v.Callback()
     end
     theskibidi.Draw()
+    rs.pop()
 end
 function love.mousepressed(x, y, button, istouch)
+    x, y = rs.to_game(x, y)
     for _,v in pairs(Scripts.mousepressed) do
         v.Callback(x, y, button, istouch)
     end
 end
 function love.mousemoved( x, y, dx, dy, istouch )
+    x, y = rs.to_game(x, y)
     for _,v in pairs(Scripts.mousemoved) do
         v.Callback( x, y, dx, dy, istouch )
     end
@@ -218,6 +237,7 @@ function love.update(dt)
     end
 end
 function love.mousereleased(x, y, button)
+    x, y = rs.to_game(x, y)
     for _,v in pairs(Scripts.mousereleased) do
         v.Callback(x, y, button)
     end
