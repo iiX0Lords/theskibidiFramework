@@ -16,7 +16,7 @@ Object = require("libraries.classic")
 
 local getTouching = require("libraries.getTouching")
 Tweenservice = require("libraries.flux")
-local rs = require("libraries.resolution_solution")
+rs = require("libraries.resolution_solution")
 rs.conf({game_width = 1280, game_height = 720, scale_mode = rs.PIXEL_PERFECT_MODE})
 rs.setMode(rs.game_width, rs.game_height, {resizable = true})
 love.resize = function(w, h)
@@ -59,12 +59,13 @@ Instance.new = function(type)
     --self.UUID = math.random(-99999999,999999999)
     self.Type = type
     self.DrawMode = "fill"
-    self.Position = Vector2.new(0, 0)
     self.Size = Vector2.new(50, 80)
+    self.Position = Vector2.new(0, 0)
     self.Velocity = Vector2.new(0, 0)
     self.Name = type
     self.Colour = Colour3.new(255, 255, 255, 255)
     self.CanCollide = true
+    self.Image = nil
 
     function self:GetTouching()
         local touching = {}
@@ -94,7 +95,7 @@ Instance.new = function(type)
             if self.Dragging and dragStart ~= nil and startPos ~= nil then
                 local delta = Vector2.new(love.mouse.getPosition()) - dragStart
                 local new = startPos + delta
-                self.Position = new
+                self.Position = new:ToGrid(12)
             end
         end)
 
@@ -162,9 +163,18 @@ end
 Gravity = Vector2.new(0, -100)
 theskibidi.Draw = function()
     for _,instance in pairs(Workspace) do
-        love.graphics.setColor(instance.Colour.r, instance.Colour.g, instance.Colour.b, instance.Colour.h)
         local x, y = instance.Position.x, instance.Position.y
-        love.graphics[instance.Type](instance.DrawMode, x, y, instance.Size.x, instance.Size.y)
+        love.graphics.setColor(instance.Colour.r, instance.Colour.g, instance.Colour.b, instance.Colour.h)
+        if instance.Type ~= "image" then
+            love.graphics[instance.Type](instance.DrawMode, x, y, instance.Size.x, instance.Size.y)
+            else
+            if instance.Image ~= nil then
+                local scaleFactor = instance.ImageSize or Vector2.new(1, 1)
+                instance.Size.x = instance.Image:getWidth() * scaleFactor.x
+                instance.Size.y = instance.Image:getHeight() * scaleFactor.y
+                love.graphics.draw(instance.Image, x, y, nil, scaleFactor.x, scaleFactor.y)
+            end
+        end
     end
 end
 theskibidi.Update = function(dt)

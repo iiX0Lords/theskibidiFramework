@@ -90,6 +90,12 @@ function Vec:clamp(max)
   return self
 end
 
+function Vec:ToGrid(snap)
+  local x = math.floor((self.x+(snap/2))/snap)*snap
+  local y = math.floor((self.y+(snap/2))/snap)*snap
+  return Vector2.new(x, y)
+end
+
 return setmetatable(Vec, 
   {__call = function(self,...) 
     return Vec:new(...) 
