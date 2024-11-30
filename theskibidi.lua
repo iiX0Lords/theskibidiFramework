@@ -2,6 +2,9 @@
 ---@diagnostic disable-next-line: lowercase-global
 theskibidi = {}
 Workspace = {}
+World = {
+    Gravity = 9
+}
 Scripts = {
     draw = {},
     load = {},
@@ -66,6 +69,7 @@ Instance.new = function(type)
     self.Colour = Colour3.new(255, 255, 255, 255)
     self.CanCollide = true
     self.Image = nil
+    self.Physics = false
 
     function self:GetTouching()
         local touching = {}
@@ -179,6 +183,12 @@ theskibidi.Draw = function()
 end
 theskibidi.Update = function(dt)
     for _,instance in pairs(Workspace) do
+
+        if instance.Physics then
+            if #instance:GetTouching() == 0 then
+                instance.Velocity = instance.Velocity + Vector2.new(0, -World.Gravity)
+            end
+        end
         
         if instance.Velocity:mag() ~= 0 then
             local dampening = instance.Dampening or 0.9
